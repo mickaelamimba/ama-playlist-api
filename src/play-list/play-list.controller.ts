@@ -7,7 +7,6 @@ import {
   UploadedFile,
   UseInterceptors,
   Param,
-  Req,
   Body,
 } from '@nestjs/common';
 import { PlayListService } from './play-list.service';
