@@ -3,16 +3,23 @@ import {
   Controller,
   Get,
   Post,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { MixtapeDto } from './mixtape.dto';
 import { MixtapeService } from './mixtape.service';
-import { diskStorage } from 'multer';
-import {
-  FileFieldsInterceptor,
-  FileInterceptor,
-} from '@nestjs/platform-express';
+
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
+
+interface MixtapeFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
+}
 
 @Controller('mixtape')
 export class MixtapeController {
@@ -27,24 +34,14 @@ export class MixtapeController {
       { name: 'year', maxCount: 1 },
     ]),
   )
-  @UseInterceptors(
-    FileInterceptor('mixtape', {
-      storage: diskStorage({
-        destination: './files/music',
-        filename(req, file, cb) {
-          console.log('req:', req.body, file);
-          const data = `${req.body.djName} - ${req.body.name} [${req.body.type}] (${req.body.year}) .mp3`;
-          cb(null, data);
-        },
-      }),
-    }),
-  )
   async addMixtape(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() MixtapeDto: MixtapeDto,
+    //@ts-ignore
+    @UploadedFiles() files: Express.Multer.File<MixtapeFile[]>,
+    @Body() mixtapeDto: MixtapeDto,
   ) {
-    console.log(MixtapeDto);
-    return 'succces';
+    const mixtapeFile = files.mixtape[0];
+    
+    return await this.mixtapeService.addMusic(mixtapeDto, mixtapeFile);
   }
   @Get()
   async createPublishName(@Body() MixtapeDto: MixtapeDto) {
